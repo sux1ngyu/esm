@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import typing as T
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import partial
 
 import torch
@@ -11,15 +11,15 @@ import torch.nn as nn
 from torch import nn
 from torch.nn import LayerNorm
 
-import esm
-from esm import Alphabet
-from esm.esmfold.v1.categorical_mixture import categorical_lddt
-from esm.esmfold.v1.misc import (
+from .... import esm
+from ... import Alphabet
+from .categorical_mixture import categorical_lddt
+from .misc import (
     batch_encode_sequences,
     collate_dense_tensors,
     output_to_pdb,
 )
-from esm.esmfold.v1.trunk import FoldingTrunk, FoldingTrunkConfig
+from .trunk import FoldingTrunk, FoldingTrunkConfig
 from openfold.data.data_transforms import make_atom14_masks
 from openfold.np import residue_constants
 from openfold.utils.loss import compute_predicted_aligned_error, compute_tm
@@ -27,7 +27,8 @@ from openfold.utils.loss import compute_predicted_aligned_error, compute_tm
 
 @dataclass
 class ESMFoldConfig:
-    trunk: T.Any = FoldingTrunkConfig()
+    # trunk: T.Any = FoldingTrunkConfig()
+    trunk: T.Any = field(default_factory=FoldingTrunkConfig)
     lddt_head_hid_dim: int = 128
 
 

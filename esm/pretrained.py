@@ -11,8 +11,8 @@ from pathlib import Path
 
 import torch
 
-import esm
-from esm.model.esm2 import ESM2
+from .. import esm
+from .model.esm2 import ESM2
 
 
 def _has_regression_weights(model_name):
@@ -28,9 +28,9 @@ def load_model_and_alphabet(model_name):
         return load_model_and_alphabet_hub(model_name)
 
 
-def load_hub_workaround(url):
+def load_hub_workaround(url, model_dir=None):
     try:
-        data = torch.hub.load_state_dict_from_url(url, progress=False, map_location="cpu")
+        data = torch.hub.load_state_dict_from_url(url, progress=False, map_location="cpu", model_dir=model_dir)
     except RuntimeError:
         # Pytorch version issue - see https://github.com/pytorch/pytorch/issues/43106
         fn = Path(url).name
@@ -43,15 +43,15 @@ def load_hub_workaround(url):
     return data
 
 
-def load_regression_hub(model_name):
+def load_regression_hub(model_name, model_dir=None):
     url = f"https://dl.fbaipublicfiles.com/fair-esm/regression/{model_name}-contact-regression.pt"
-    regression_data = load_hub_workaround(url)
+    regression_data = load_hub_workaround(url, model_dir=model_dir)
     return regression_data
 
 
-def _download_model_and_regression_data(model_name):
+def _download_model_and_regression_data(model_name, model_dir=None):
     url = f"https://dl.fbaipublicfiles.com/fair-esm/models/{model_name}.pt"
-    model_data = load_hub_workaround(url)
+    model_data = load_hub_workaround(url, model_dir=model_dir)
     if _has_regression_weights(model_name):
         regression_data = load_regression_hub(model_name)
     else:
@@ -59,8 +59,8 @@ def _download_model_and_regression_data(model_name):
     return model_data, regression_data
 
 
-def load_model_and_alphabet_hub(model_name):
-    model_data, regression_data = _download_model_and_regression_data(model_name)
+def load_model_and_alphabet_hub(model_name, model_dir=None):
+    model_data, regression_data = _download_model_and_regression_data(model_name, model_dir=model_dir)
     return load_model_and_alphabet_core(model_name, model_data, regression_data)
 
 
@@ -347,54 +347,54 @@ def esm_if1_gvp4_t16_142M_UR50():
     return load_model_and_alphabet_hub("esm_if1_gvp4_t16_142M_UR50")
 
 
-def esm2_t6_8M_UR50D():
+def esm2_t6_8M_UR50D(model_dir=None):
     """6 layer ESM-2 model with 8M params, trained on UniRef50.
 
     Returns a tuple of (Model, Alphabet).
     """
-    return load_model_and_alphabet_hub("esm2_t6_8M_UR50D")
+    return load_model_and_alphabet_hub("esm2_t6_8M_UR50D", model_dir=model_dir)
 
 
-def esm2_t12_35M_UR50D():
+def esm2_t12_35M_UR50D(model_dir=None):
     """12 layer ESM-2 model with 35M params, trained on UniRef50.
 
     Returns a tuple of (Model, Alphabet).
     """
-    return load_model_and_alphabet_hub("esm2_t12_35M_UR50D")
+    return load_model_and_alphabet_hub("esm2_t12_35M_UR50D", model_dir=model_dir)
 
 
-def esm2_t30_150M_UR50D():
+def esm2_t30_150M_UR50D(model_dir=None):
     """30 layer ESM-2 model with 150M params, trained on UniRef50.
 
     Returns a tuple of (Model, Alphabet).
     """
-    return load_model_and_alphabet_hub("esm2_t30_150M_UR50D")
+    return load_model_and_alphabet_hub("esm2_t30_150M_UR50D", model_dir=model_dir)
 
 
-def esm2_t33_650M_UR50D():
+def esm2_t33_650M_UR50D(model_dir=None):
     """33 layer ESM-2 model with 650M params, trained on UniRef50.
 
     Returns a tuple of (Model, Alphabet).
     """
-    return load_model_and_alphabet_hub("esm2_t33_650M_UR50D")
+    return load_model_and_alphabet_hub("esm2_t33_650M_UR50D", model_dir=model_dir)
 
 
-def esm2_t36_3B_UR50D():
+def esm2_t36_3B_UR50D(model_dir=None):
     """36 layer ESM-2 model with 3B params, trained on UniRef50.
 
     Returns a tuple of (Model, Alphabet).
     """
-    return load_model_and_alphabet_hub("esm2_t36_3B_UR50D")
+    return load_model_and_alphabet_hub("esm2_t36_3B_UR50D", model_dir=model_dir)
 
 
-def esm2_t48_15B_UR50D():
+def esm2_t48_15B_UR50D(model_dir=None):
     """48 layer ESM-2 model with 15B params, trained on UniRef50.
     If you have OOM while loading this model, please refer to README
     on how to employ FSDP and ZeRO CPU offloading
 
     Returns a tuple of (Model, Alphabet).
     """
-    return load_model_and_alphabet_hub("esm2_t48_15B_UR50D")
+    return load_model_and_alphabet_hub("esm2_t48_15B_UR50D", model_dir=model_dir)
 
 
 def esmfold_v0():
@@ -404,8 +404,8 @@ def esmfold_v0():
     on all PDB chains until 2020-05, to ensure temporal holdout with CASP14
     and the CAMEO validation and test set reported there.
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_v0()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_v0()
 
 
 def esmfold_v1():
@@ -416,8 +416,8 @@ def esmfold_v1():
     protein language model to extract meaningful representations from the
     protein sequence.
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_v1()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_v1()
 
 def esmfold_structure_module_only_8M():
     """
@@ -427,8 +427,8 @@ def esmfold_structure_module_only_8M():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_8M()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_8M()
 
 
 def esmfold_structure_module_only_8M_270K():
@@ -439,8 +439,8 @@ def esmfold_structure_module_only_8M_270K():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_8M_270K()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_8M_270K()
 
 
 def esmfold_structure_module_only_35M():
@@ -451,8 +451,8 @@ def esmfold_structure_module_only_35M():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_35M()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_35M()
 
 
 def esmfold_structure_module_only_35M_270K():
@@ -463,8 +463,8 @@ def esmfold_structure_module_only_35M_270K():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_35M_270K()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_35M_270K()
 
 
 def esmfold_structure_module_only_150M():
@@ -475,8 +475,8 @@ def esmfold_structure_module_only_150M():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_150M()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_150M()
 
 
 def esmfold_structure_module_only_150M_270K():
@@ -487,8 +487,8 @@ def esmfold_structure_module_only_150M_270K():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_150M_270K()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_150M_270K()
 
 
 def esmfold_structure_module_only_650M():
@@ -499,8 +499,8 @@ def esmfold_structure_module_only_650M():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_650M()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_650M()
 
 
 def esmfold_structure_module_only_650M_270K():
@@ -511,8 +511,8 @@ def esmfold_structure_module_only_650M_270K():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_650M_270K()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_650M_270K()
 
 
 def esmfold_structure_module_only_3B():
@@ -523,8 +523,8 @@ def esmfold_structure_module_only_3B():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_3B()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_3B()
 
 
 def esmfold_structure_module_only_3B_270K():
@@ -535,8 +535,8 @@ def esmfold_structure_module_only_3B_270K():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_3B_270K()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_3B_270K()
 
 
 def esmfold_structure_module_only_15B():
@@ -548,5 +548,5 @@ def esmfold_structure_module_only_15B():
     when ablated for number of parameters in the language model.
     See table S1 in (Lin et al, 2022).
     """
-    import esm.esmfold.v1.pretrained
-    return esm.esmfold.v1.pretrained.esmfold_structure_module_only_15B()
+    from .esmfold.v1 import pretrained
+    return pretrained.esmfold_structure_module_only_15B()

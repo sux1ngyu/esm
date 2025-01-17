@@ -9,4 +9,4 @@ from .data import Alphabet, BatchConverter, FastaBatchedDataset  # noqa
 from .model.esm1 import ProteinBertModel  # noqa
 from .model.esm2 import ESM2  # noqa
 from .model.msa_transformer import MSATransformer  #noqa
-from . import pretrained  # noqa
+from . import pretrained, esmfold  # noqa
